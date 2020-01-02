@@ -85,7 +85,7 @@ class ArangoModel
         $this->connection = new ArangoConnection($connectionOptions);
 
         $this->model = Str::snake(class_basename($this));
-        
+
         $this->collection = Str::snake(Str::pluralStudly(class_basename($this)));
     }
 
@@ -150,6 +150,21 @@ class ArangoModel
     }
 
     /**
+     * Execute query
+     *
+     * @return \ArangoDBClient\Statement
+     */
+    public function get()
+    {
+        
+        $this->statement = 'FOR i IN ' . $this->collection . ' RETURN i';
+
+        $cursor = $this->statement->execute();
+
+        return $cursor->getAll();
+    }
+
+    /**
      * Return all documents
      *
      * @return \ArangoDBClient\Statement
@@ -157,6 +172,7 @@ class ArangoModel
     public function all()
     {
         $statement = 'FOR i IN ' . $this->collection . ' RETURN i';
+
         return $this->query($statement);
     }
 
