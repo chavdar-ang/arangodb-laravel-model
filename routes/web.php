@@ -18,5 +18,9 @@ Route::get('/', function () {
 
 Route::get('/test', function () {
     $post = new \App\Post;
+    $post->create([
+        'test' => 'some cool test',
+        'foo' => 'a cool bar'
+    ]);
     $post->all();
 });

@@ -148,4 +148,11 @@ class ArangoModel
         $query = $this->query($statement);
         // return 
     }
+
+    public function create(array $data)
+    {
+        $statement = 'INSERT ' . json_encode($data) . ' IN ' . $this->collection;
+        // dd($statement);
+        $query = $this->query($statement);
+    }
 }
