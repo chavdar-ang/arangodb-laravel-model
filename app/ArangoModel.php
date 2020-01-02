@@ -84,6 +84,8 @@ class ArangoModel
 
         $this->connection = new ArangoConnection($connectionOptions);
 
+        $this->model = Str::snake(class_basename($this));
+        
         $this->collection = Str::snake(Str::pluralStudly(class_basename($this)));
     }
 
@@ -131,6 +133,11 @@ class ArangoModel
         return $handler->get($this->collection, $id);
     }
 
+    /**
+     * AQL query method
+     *
+     * @return \ArangoDBClient\Statement
+     */
     public function query(string $query)
     {
         // create a statement to insert 1000 test users
@@ -139,20 +146,30 @@ class ArangoModel
         // execute the statement
         $cursor = $statement->execute();
 
-        dd($cursor->getAll());
+        return $cursor->getAll();
     }
 
+    /**
+     * Return all documents
+     *
+     * @return \ArangoDBClient\Statement
+     */
     public function all()
     {
         $statement = 'FOR i IN ' . $this->collection . ' RETURN i';
-        $query = $this->query($statement);
-        // return 
+        return $this->query($statement);
     }
 
+    /**
+     * Crate new document and save it to the database
+     *
+     * @param  array  $data
+     * @return \ArangoDBClient\Statement
+     */
     public function create(array $data)
     {
         $statement = 'INSERT ' . json_encode($data) . ' IN ' . $this->collection;
-        // dd($statement);
         $query = $this->query($statement);
+        dd($query);
     }
 }
