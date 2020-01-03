@@ -17,10 +17,13 @@ Route::get('/', function () {
 
 
 Route::get('/test', function () {
-    $post = new \App\Post;
-    $post->create([
-        'test' => 'some cool test',
-        'foo' => 'a cool bar'
-    ]);
-    $post->all();
+    // return (new \App\Post)->all();
+    $test = (new \App\Post)->filter('foo', 'a cool bar')->first();
+    dd($test);
+    // $post = new \App\Post;
+    // $post->create([
+    //     'test' => 'some cool test',
+    //     'foo' => 'a cool bar'
+    // ]);
+    // $post->all();
 });

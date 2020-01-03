@@ -43,7 +43,7 @@ class ArangoModel
     protected $attributes = [];
 
     /**
-     * The table collection of the current model.
+     * The table collection with the model.
      *
      * @var string
      */
@@ -54,7 +54,7 @@ class ArangoModel
      *
      * @var string
      */
-    protected $statement;
+    protected $statement = 'FOR i IN ' . $this->collection;
 
     // new document properties
     protected $document;
@@ -94,90 +94,105 @@ class ArangoModel
         $this->model = Str::snake(class_basename($this));
 
         $this->collection = Str::snake(Str::pluralStudly(class_basename($this)));
-
-        // default AQL statement
-        $this->statement = 'FOR i IN ' . $this->collection;
     }
 
+    /**
+     * Find a model by its primary key.
+     *
+     * @param  mixed  $id
+     * @return ArangoDBClient\Document|null
+     */
+    public static function find($id)
+    {
+        // create a new document handler
+        $handler = new ArangoDocumentHandler($this->connection);
+
+        return $handler->get($this->collection, $id);
+    }
+
+    /**
+     * Dynamically set attributes on the model.
+     *
+     * @param  string  $key
+     * @param  mixed  $value
+     * @return void
+     */
     public function __set($key, $value)
     {
         $this->attributes[$key] = $value;
     }
 
-    // public function save(array $options = [])
-    // {
-    //     // create a new document handler
-    //     $handler = new ArangoDocumentHandler($this->connection);
+    /**
+     * Save the model to the database.
+     *
+     * @param  array  $options
+     * @return bool
+     */
+    public function save(array $options = [])
+    {
+        // create a new document handler
+        $handler = new ArangoDocumentHandler($this->connection);
 
-    //     // send the document to the server
-    //     $id = $handler->save($this->collection, $this->attributes);
+        // send the document to the server
+        $id = $handler->save($this->collection, $this->attributes);
 
-    //     return $handler->get($this->collection, $id);
-    // }
+        return $handler->get($this->collection, $id);
+    }
 
     /**
      * AQL query method
      *
      * @return \ArangoDBClient\Statement
      */
-    public function query(string $query = '')
+    public function query(string $query)
     {
-        (!empty($query)) ?? $this->statement .= $query;
-
-        $this->statement .= ' RETURN i';
-        $statement = new ArangoStatement($this->connection, ['query' => $this->statement]);
+        // create a statement to insert 1000 test users
+        $statement = new ArangoStatement($this->connection, ['query' => $query]);
 
         // execute the statement
         $cursor = $statement->execute();
 
         return $cursor->getAll();
     }
-    
-    public function find(int $id)
-    {
-        $this->statement .= ' FILTER i._key > "'. $id .'"';
-        $this->take(1);
-        // Get the first element from the collection, not the collection itself
-        return $this->get(){0};
-    }
 
-    public function take(int $limit)
-    {
-        $this->statement .= ' LIMIT 1';
-        return $this;
-    }
-    
-    public function first()
-    {
-        return $this->get(){0};
-    }
-    
+    /**
+     * Execute query
+     *
+     * @return \ArangoDBClient\Statement
+     */
     public function get()
     {
-        return $this->query($this->statement);
+        if (!$this->statement) {
+            $this->statement = 'FOR i IN ' . $this->collection . ' RETURN i';
+        }
+
+        $cursor = $this->statement->execute();
+
+        return $cursor->getAll();
     }
-    
+
+    /**
+     * Return all documents
+     *
+     * @return \ArangoDBClient\Statement
+     */
     public function all()
     {
-        return $this->get();
+        $statement = 'FOR i IN ' . $this->collection . ' RETURN i';
+
+        return $this->query($statement);
     }
 
-    public function filter($property, $operator = null, $value = null)
-    {
-        // if operator is not present
-        if (func_num_args() === 2) {
-            $value = $operator;
-            $operator = '==';
-        }
-        $this->statement .= ' FILTER i.'.$property.' '.$operator.' "'.$value.'"';
-        return $this;
-    }
-
+    /**
+     * Crate new document and save it to the database
+     *
+     * @param  array  $data
+     * @return \ArangoDBClient\Statement
+     */
     public function create(array $data)
     {
         $statement = 'INSERT ' . json_encode($data) . ' IN ' . $this->collection;
         $query = $this->query($statement);
         dd($query);
     }
-
 }
